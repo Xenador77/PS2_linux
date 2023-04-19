@@ -1,8 +1,7 @@
 name: build
 
 on:
-  push:
-  pull_request:
+  workflow_dispatch:
 
 jobs:
   build:
@@ -57,7 +56,6 @@ jobs:
             tar cvzf usr/initramfs-"$variant".tar.gz -C /srv --exclude initramfs/lib/modules initramfs
           }
           make_vmlinuz ntsc 640x448i@60
-          make_vmlinuz pal  640x512i@50
 
       - name: Publish NTSC kernel
         if: ${{ success() }}
@@ -65,36 +63,10 @@ jobs:
         with:
           name: "vmlinuz-ntsc-${{ env.ARCHIVE_TAG }}"
           path: vmlinuz-ntsc-${{ env.ARCHIVE_TAG }}.elf
-
-      - name: Publish PAL kernel
-        if: ${{ success() }}
-        uses: actions/upload-artifact@v3
-        with:
-          name: "vmlinuz-pal-${{ env.ARCHIVE_TAG }}"
-          path: vmlinuz-pal-${{ env.ARCHIVE_TAG }}.elf
-
+          
       - name: Publish NTSC initramfs archive
         if: ${{ success() }}
         uses: actions/upload-artifact@v3
         with:
           name: "initramfs-ntsc-${{ env.ARCHIVE_TAG }}"
           path: usr/initramfs-ntsc.tar.gz
-
-      - name: Publish PAL initramfs archive
-        if: ${{ success() }}
-        uses: actions/upload-artifact@v3
-        with:
-          name: "initramfs-pal-${{ env.ARCHIVE_TAG }}"
-          path: usr/initramfs-pal.tar.gz
-
-      - name: Publish PAL kernel and PAL initramfs archive as a prerelease package
-        if: ${{ success() && github.ref == 'refs/heads/ps2-main' }}
-        uses: marvinpinto/action-automatic-releases@latest
-        with:
-          repo_token: "${{ secrets.GITHUB_TOKEN }}"
-          prerelease: true
-          automatic_release_tag: "${{ github.ref_name }}-package"
-          title: Linux kernel and initramfs archive package
-          files: |
-            vmlinuz-pal-${{ env.ARCHIVE_TAG }}.elf
-            usr/initramfs-pal.tar.gz
